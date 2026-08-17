@@ -1,15 +1,14 @@
 # Move Mouse for CachyOS / KDE Plasma 6
 
-This directory contains the KDE Plasma 6 edition of Move Mouse for CachyOS and other Arch-based distributions. It is designed to preserve the familiar Move Mouse interaction while working correctly in a Plasma Wayland session.
+This directory contains the KDE Plasma 6 edition of Move Mouse for CachyOS and other Arch-based distributions. It preserves the familiar Move Mouse interaction while working correctly in a Plasma Wayland session.
 
 ## Windows-style Move Mouse experience
 
-The Plasma edition now follows the original Windows `MouseWindow` design rather than using a generic Plasma button:
-
 - Circular Move Mouse control with the **original Move Mouse mouse mascot** in the centre when installed from the repository.
+- The green play triangle is centred on the mascot.
 - Click the mouse itself to Start/Stop.
-- Green play badge while idle.
 - Circular countdown ring while running.
+- **Real keyboard/mouse activity resets the countdown**. Move Mouse only executes after the configured period of continuous inactivity.
 - Green running state, orange execution state, yellow scheduled state and purple blackout state.
 - Optional status text inside the circular control.
 - Right-click the widget and choose **Configure Move Mouse…** for the settings window.
@@ -17,9 +16,20 @@ The Plasma edition now follows the original Windows `MouseWindow` design rather 
 
 The installer stages the original `Move Mouse/Resources/Mouse.ico` asset into the Plasma package. A built-in SVG mascot is retained as a fallback.
 
-## Settings
+## How activity detection works on Wayland
 
-The configuration window mirrors the major sections of the Windows application:
+KDE's Wayland idle backend is event-driven rather than pollable. The Plasma edition therefore installs a tiny native helper built against KDE Frameworks `KIdleTime`.
+
+The helper waits for KDE's idle and resume events:
+
+1. While you are moving the mouse or typing, the countdown remains reset.
+2. After a very short quiet period, the configured countdown begins.
+3. Any real keyboard/mouse input immediately resets the countdown.
+4. When the full interval is reached, the configured Move Mouse actions run.
+
+This avoids relying on X11-only idle APIs or the unsupported Wayland `GetSessionIdleTime` polling path.
+
+## Settings
 
 ### Actions
 
@@ -56,14 +66,22 @@ The configuration window mirrors the major sections of the Windows application:
 
 ## Requirements
 
+Runtime:
+
 - KDE Plasma 6.
-- `ydotool`.
-- The `ydotool` user service (`ydotoold`) running.
+- `ydotool` and its user service.
+- KDE Frameworks `kidletime`.
+
+The installer also compiles the small idle-event helper, so the following build packages are required once:
+
+- `cmake`
+- `extra-cmake-modules`
+- `gcc`
 
 On CachyOS/Arch Linux:
 
 ```bash
-sudo pacman -S ydotool
+sudo pacman -S --needed ydotool kidletime cmake extra-cmake-modules gcc
 systemctl --user enable --now ydotool.service
 ```
 
@@ -75,81 +93,77 @@ From the repository root:
 bash linux/plasma6/install-cachyos.sh
 ```
 
-The same installer command upgrades an existing test installation and ensures the original mouse artwork is staged into the installed Plasma package.
+The installer:
 
-Then:
+- builds and installs `~/.local/libexec/movemouse/movemouse-idle-monitor`;
+- upgrades the Plasma widget;
+- stages the original Windows mouse artwork into the widget package.
+
+Then restart Plasma Shell after an upgrade:
+
+```bash
+systemctl --user restart plasma-plasmashell.service
+```
+
+If Plasma keeps an old widget instance cached, remove Move Mouse from the panel/desktop and add it again.
+
+## Add the widget
 
 1. Right-click the KDE Plasma panel or desktop.
 2. Choose **Add Widgets…**.
 3. Search for **Move Mouse**.
 4. Add it to the panel or desktop.
 5. Click the circular mouse control to start or stop it.
-6. Right-click the widget and choose **Configure Move Mouse…** to access Actions, Behaviour, Appearance, Schedules and Blackouts.
-
-If Plasma keeps a cached copy of the earlier widget after upgrading, restart Plasma Shell:
-
-```bash
-systemctl --user restart plasma-plasmashell.service
-```
-
-If necessary, remove the widget from the panel/desktop and add it again after the restart.
-
-## Manual install
-
-A direct package install works, but it uses the SVG fallback mascot because the original Windows `.ico` is staged by `install-cachyos.sh`:
-
-```bash
-kpackagetool6 --type Plasma/Applet --install linux/plasma6/org.movemouse.plasma
-```
-
-To remove it:
-
-```bash
-kpackagetool6 --type Plasma/Applet --remove org.movemouse.plasma
-```
-
-## Wayland notes
-
-KDE Plasma Wayland does not allow an ordinary application to arbitrarily warp the user's pointer through legacy X11 APIs. This implementation uses `ydotool`, which injects input through Linux's `uinput` subsystem, so the simulated movement/click is visible to Wayland applications and Plasma itself.
-
-The widget uses Plasma's executable data-engine compatibility module to launch the local `ydotool` commands. The visual/widget structure itself targets Plasma 6 (`X-Plasma-API-Minimum-Version: 6.0`).
+6. Right-click the widget and choose **Configure Move Mouse…**.
 
 ## Troubleshooting
 
-Check that `ydotool` is installed:
+Check the simulated input backend:
 
 ```bash
 ydotool --help
-```
-
-Check the daemon:
-
-```bash
 systemctl --user status ydotool.service
-```
-
-Test pointer movement directly:
-
-```bash
 ydotool mousemove -x 5 -y 0
 ```
 
-Test a left click:
+Check that the KDE idle helper was installed:
 
 ```bash
-ydotool click 0xC0
+ls -l ~/.local/libexec/movemouse/movemouse-idle-monitor
 ```
 
-If direct input fails, inspect `/dev/uinput` permissions and the service logs:
+Test idle detection by running the following and then not touching the keyboard or mouse for three seconds. The command should exit after the idle timeout:
+
+```bash
+~/.local/libexec/movemouse/movemouse-idle-monitor --wait-idle 3000
+```
+
+Test resume detection by running the following, then moving the mouse after it starts. The command should exit on activity:
+
+```bash
+~/.local/libexec/movemouse/movemouse-idle-monitor --wait-activity
+```
+
+If direct input fails, inspect `/dev/uinput` permissions and the ydotool service logs:
 
 ```bash
 journalctl --user -u ydotool.service -b
+```
+
+## Remove
+
+```bash
+kpackagetool6 --type Plasma/Applet --remove org.movemouse.plasma
+rm -f ~/.local/libexec/movemouse/movemouse-idle-monitor
 ```
 
 ## Source layout
 
 ```text
 linux/plasma6/
+├── idle-monitor/
+│   ├── CMakeLists.txt
+│   └── main.cpp
 ├── install-cachyos.sh
 ├── README.md
 └── org.movemouse.plasma/
