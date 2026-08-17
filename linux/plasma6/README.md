@@ -1,16 +1,56 @@
 # Move Mouse for CachyOS / KDE Plasma 6
 
-This directory contains a KDE Plasma 6 widget for Move Mouse. It is designed for CachyOS and other Arch-based distributions running KDE Plasma 6, including Wayland sessions.
+This directory contains the KDE Plasma 6 edition of Move Mouse for CachyOS and other Arch-based distributions. It is designed to preserve the familiar Move Mouse interaction while working correctly in a Plasma Wayland session.
 
-## Features
+## Windows-style Move Mouse experience
 
-- Native Plasma panel/desktop widget.
-- One-click Start/Stop control.
-- Configurable movement interval (5–3600 seconds).
-- Configurable movement distance (1–50 pixels).
-- Alternates left/right movement so the pointer stays close to its original location.
-- Uses `ydotool`/Linux `uinput`, so it works under Wayland rather than relying on X11-only pointer APIs.
-- Keeps the existing Windows/WPF application untouched.
+The Plasma edition now follows the original Windows `MouseWindow` design rather than using a generic Plasma button:
+
+- Circular Move Mouse control with the mouse mascot in the centre.
+- Click the mouse itself to Start/Stop.
+- Green play badge while idle.
+- Circular countdown ring while running.
+- Green running state, orange execution state, yellow scheduled state and purple blackout state.
+- Optional status text inside the circular control.
+- Right-click the widget and choose **Configure Move Mouse…** for the settings window.
+- Right-click also provides quick **Start/Stop Move Mouse** and **Test actions now** commands.
+
+## Settings
+
+The configuration window mirrors the major sections of the Windows application:
+
+### Actions
+
+- Enable/disable pointer movement.
+- Movement distance.
+- Horizontal, vertical, diagonal, square or random movement.
+- Optional left, right or middle mouse click after movement.
+
+### Behaviour
+
+- Fixed repeat interval.
+- Random interval between minimum and maximum values.
+- Automatically start actions when the widget loads.
+
+### Appearance
+
+- Show/hide status text.
+- Show/hide the countdown ring.
+- Enable/disable execution animation.
+- Configure ring thickness.
+
+### Schedules
+
+- Enable a working-hours schedule.
+- Choose start/end times.
+- Choose active days of the week.
+- Overnight schedules are supported.
+
+### Blackouts
+
+- Pause simulated input during a configured blackout window.
+- Choose blackout start/end times and days.
+- The circular ring changes to purple while a blackout is active.
 
 ## Requirements
 
@@ -24,8 +64,6 @@ On CachyOS/Arch Linux:
 sudo pacman -S ydotool
 systemctl --user enable --now ydotool.service
 ```
-
-The Arch package includes `ydotool`, `ydotoold`, a user systemd service, and the udev rule required for `/dev/uinput` access.
 
 ## Install
 
@@ -41,19 +79,31 @@ Then:
 2. Choose **Add Widgets…**.
 3. Search for **Move Mouse**.
 4. Add it to the panel or desktop.
-5. Click the mouse icon to start/stop movement.
-6. Right-click the widget and choose **Configure Move Mouse…** to change the interval or movement distance.
+5. Click the circular mouse control to start or stop it.
+6. Right-click the widget and choose **Configure Move Mouse…** to access Actions, Behaviour, Appearance, Schedules and Blackouts.
+
+## Upgrade an existing test installation
+
+If you installed the earlier version from this branch, update the repository and run:
+
+```bash
+git pull
+kpackagetool6 --type Plasma/Applet --upgrade linux/plasma6/org.movemouse.plasma
+systemctl --user restart plasma-plasmashell.service
+```
+
+If Plasma keeps a cached copy of the previous widget, remove and reinstall it:
+
+```bash
+kpackagetool6 --type Plasma/Applet --remove org.movemouse.plasma
+kpackagetool6 --type Plasma/Applet --install linux/plasma6/org.movemouse.plasma
+systemctl --user restart plasma-plasmashell.service
+```
 
 ## Manual install
 
 ```bash
 kpackagetool6 --type Plasma/Applet --install linux/plasma6/org.movemouse.plasma
-```
-
-To upgrade an existing installation:
-
-```bash
-kpackagetool6 --type Plasma/Applet --upgrade linux/plasma6/org.movemouse.plasma
 ```
 
 To remove it:
@@ -64,9 +114,9 @@ kpackagetool6 --type Plasma/Applet --remove org.movemouse.plasma
 
 ## Wayland notes
 
-KDE Plasma Wayland does not allow an ordinary application to arbitrarily warp the user's pointer through legacy X11 APIs. This implementation therefore uses `ydotool`, which injects input through Linux's `uinput` subsystem. That makes the movement visible to Wayland applications and Plasma itself.
+KDE Plasma Wayland does not allow an ordinary application to arbitrarily warp the user's pointer through legacy X11 APIs. This implementation uses `ydotool`, which injects input through Linux's `uinput` subsystem, so the simulated movement/click is visible to Wayland applications and Plasma itself.
 
-The widget currently uses Plasma's executable data engine compatibility module to launch the local `ydotool` command. The visual/widget structure itself targets Plasma 6 (`X-Plasma-API-Minimum-Version: 6.0`).
+The widget uses Plasma's executable data-engine compatibility module to launch the local `ydotool` commands. The visual/widget structure itself targets Plasma 6 (`X-Plasma-API-Minimum-Version: 6.0`).
 
 ## Troubleshooting
 
@@ -88,16 +138,16 @@ Test pointer movement directly:
 ydotool mousemove -x 5 -y 0
 ```
 
-If direct movement fails, inspect `/dev/uinput` permissions and the service logs:
+Test a left click:
+
+```bash
+ydotool click 0xC0
+```
+
+If direct input fails, inspect `/dev/uinput` permissions and the service logs:
 
 ```bash
 journalctl --user -u ydotool.service -b
-```
-
-After modifying QML files during development, restart Plasma Shell if necessary:
-
-```bash
-systemctl --user restart plasma-plasmashell.service
 ```
 
 ## Source layout
@@ -109,10 +159,17 @@ linux/plasma6/
 └── org.movemouse.plasma/
     ├── metadata.json
     └── contents/
+        ├── images/
+        │   └── mouse.svg
         ├── config/
         │   ├── config.qml
         │   └── main.xml
         └── ui/
-            ├── ConfigGeneral.qml
+            ├── ConfigActions.qml
+            ├── ConfigAppearance.qml
+            ├── ConfigBehaviour.qml
+            ├── ConfigBlackouts.qml
+            ├── ConfigSchedules.qml
+            ├── MouseFace.qml
             └── main.qml
 ```
