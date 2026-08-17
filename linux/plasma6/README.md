@@ -6,7 +6,7 @@ This directory contains the KDE Plasma 6 edition of Move Mouse for CachyOS and o
 
 The Plasma edition now follows the original Windows `MouseWindow` design rather than using a generic Plasma button:
 
-- Circular Move Mouse control with the mouse mascot in the centre.
+- Circular Move Mouse control with the **original Move Mouse mouse mascot** in the centre when installed from the repository.
 - Click the mouse itself to Start/Stop.
 - Green play badge while idle.
 - Circular countdown ring while running.
@@ -14,6 +14,8 @@ The Plasma edition now follows the original Windows `MouseWindow` design rather 
 - Optional status text inside the circular control.
 - Right-click the widget and choose **Configure Move Mouse…** for the settings window.
 - Right-click also provides quick **Start/Stop Move Mouse** and **Test actions now** commands.
+
+The installer stages the original `Move Mouse/Resources/Mouse.ico` asset into the Plasma package. A built-in SVG mascot is retained as a fallback.
 
 ## Settings
 
@@ -65,13 +67,15 @@ sudo pacman -S ydotool
 systemctl --user enable --now ydotool.service
 ```
 
-## Install
+## Install / upgrade
 
 From the repository root:
 
 ```bash
 bash linux/plasma6/install-cachyos.sh
 ```
+
+The same installer command upgrades an existing test installation and ensures the original mouse artwork is staged into the installed Plasma package.
 
 Then:
 
@@ -82,25 +86,17 @@ Then:
 5. Click the circular mouse control to start or stop it.
 6. Right-click the widget and choose **Configure Move Mouse…** to access Actions, Behaviour, Appearance, Schedules and Blackouts.
 
-## Upgrade an existing test installation
-
-If you installed the earlier version from this branch, update the repository and run:
+If Plasma keeps a cached copy of the earlier widget after upgrading, restart Plasma Shell:
 
 ```bash
-git pull
-kpackagetool6 --type Plasma/Applet --upgrade linux/plasma6/org.movemouse.plasma
 systemctl --user restart plasma-plasmashell.service
 ```
 
-If Plasma keeps a cached copy of the previous widget, remove and reinstall it:
-
-```bash
-kpackagetool6 --type Plasma/Applet --remove org.movemouse.plasma
-kpackagetool6 --type Plasma/Applet --install linux/plasma6/org.movemouse.plasma
-systemctl --user restart plasma-plasmashell.service
-```
+If necessary, remove the widget from the panel/desktop and add it again after the restart.
 
 ## Manual install
+
+A direct package install works, but it uses the SVG fallback mascot because the original Windows `.ico` is staged by `install-cachyos.sh`:
 
 ```bash
 kpackagetool6 --type Plasma/Applet --install linux/plasma6/org.movemouse.plasma
