@@ -103,12 +103,9 @@ Item {
     Canvas {
         id: playBadge
         visible: face.stateName === "Idle"
-        width: face.compact ? parent.width * 0.35 : parent.width * 0.25
+        width: face.compact ? mascot.width * 0.42 : mascot.width * 0.38
         height: width
-        anchors.right: mascot.right
-        anchors.bottom: mascot.bottom
-        anchors.rightMargin: -width * 0.18
-        anchors.bottomMargin: -height * 0.05
+        anchors.centerIn: mascot
 
         onVisibleChanged: requestPaint()
         Component.onCompleted: requestPaint()
@@ -120,9 +117,9 @@ Item {
             ctx.strokeStyle = "#12660c"
             ctx.lineWidth = Math.max(1.5, width * 0.06)
             ctx.beginPath()
-            ctx.moveTo(width * 0.22, height * 0.12)
-            ctx.lineTo(width * 0.86, height * 0.5)
-            ctx.lineTo(width * 0.22, height * 0.88)
+            ctx.moveTo(width * 0.24, height * 0.12)
+            ctx.lineTo(width * 0.82, height * 0.5)
+            ctx.lineTo(width * 0.24, height * 0.88)
             ctx.closePath()
             ctx.fill()
             ctx.stroke()
