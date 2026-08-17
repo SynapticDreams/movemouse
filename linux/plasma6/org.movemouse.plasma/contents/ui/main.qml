@@ -16,6 +16,17 @@ PlasmoidItem {
     property int squarePhase: 0
     property string lastError: ""
 
+    // KDE Wayland does not expose pollable idle milliseconds. Instead we use
+    // KIdleTime's native idle/resume events through the bundled helper.
+    property bool inactivityCountdownActive: false
+    property bool idleWaitPending: false
+    property bool activityWaitPending: false
+    property bool actionInFlight: false
+    property int trackingEpoch: 0
+    property string idleWaitSource: ""
+    property string activityWaitSource: ""
+    readonly property int activityArmDelayMs: 250
+
     Plasmoid.icon: "input-mouse"
     Plasmoid.status: running ? PlasmaCore.Types.ActiveStatus : PlasmaCore.Types.PassiveStatus
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
@@ -64,6 +75,11 @@ PlasmoidItem {
         onActivated: root.toggleRunning()
     }
 
+    function helperCommand(arguments, token) {
+        return "bash -lc '\"$HOME/.local/libexec/movemouse/movemouse-idle-monitor\" "
+            + arguments + " --token " + token + "'"
+    }
+
     function toggleRunning() {
         running = !running
         lastError = ""
@@ -72,7 +88,10 @@ PlasmoidItem {
             suspended = false
             resetCycle()
             refreshState()
+            if (scheduleAllowsNow() && !blackoutActiveNow())
+                startActivityTracking()
         } else {
+            stopActivityTracking()
             elapsedMs = 0
             progress = 1.0
             stateName = "Idle"
@@ -93,6 +112,47 @@ PlasmoidItem {
         elapsedMs = 0
         cycleDurationMs = chooseIntervalMs()
         progress = 1.0
+    }
+
+    function stopActivityTracking() {
+        trackingEpoch += 1
+        inactivityCountdownActive = false
+
+        if (idleWaitSource.length > 0)
+            idleWaiter.disconnectSource(idleWaitSource)
+        if (activityWaitSource.length > 0)
+            activityWaiter.disconnectSource(activityWaitSource)
+
+        idleWaitSource = ""
+        activityWaitSource = ""
+        idleWaitPending = false
+        activityWaitPending = false
+    }
+
+    function startActivityTracking() {
+        stopActivityTracking()
+        resetCycle()
+        armIdleWait()
+    }
+
+    function armIdleWait() {
+        if (!running || idleWaitPending || blackoutActiveNow() || !scheduleAllowsNow())
+            return
+
+        const token = trackingEpoch
+        idleWaitSource = helperCommand("--wait-idle " + activityArmDelayMs, token)
+        idleWaitPending = true
+        idleWaiter.connectSource(idleWaitSource)
+    }
+
+    function armActivityWait() {
+        if (!running || activityWaitPending || blackoutActiveNow() || !scheduleAllowsNow())
+            return
+
+        const token = trackingEpoch
+        activityWaitSource = helperCommand("--wait-activity", token)
+        activityWaitPending = true
+        activityWaiter.connectSource(activityWaitSource)
     }
 
     function parseMinutes(value) {
@@ -202,29 +262,29 @@ PlasmoidItem {
         let dy = 0
 
         switch (Plasmoid.configuration.moveDirection) {
-        case 1: // Vertical
+        case 1:
             dy = movePositive ? amount : -amount
             movePositive = !movePositive
             break
-        case 2: // Diagonal
+        case 2:
             dx = movePositive ? amount : -amount
             dy = dx
             movePositive = !movePositive
             break
-        case 3: // Square
+        case 3:
             if (squarePhase === 0) dx = amount
             else if (squarePhase === 1) dy = amount
             else if (squarePhase === 2) dx = -amount
             else dy = -amount
             squarePhase = (squarePhase + 1) % 4
             break
-        case 4: // Random
+        case 4:
             dx = Math.round((Math.random() * 2 - 1) * amount)
             dy = Math.round((Math.random() * 2 - 1) * amount)
             if (dx === 0 && dy === 0)
                 dx = amount
             break
-        default: // Horizontal
+        default:
             dx = movePositive ? amount : -amount
             movePositive = !movePositive
             break
@@ -243,6 +303,9 @@ PlasmoidItem {
     }
 
     function performActions(manualTest) {
+        if (actionInFlight)
+            return
+
         const commands = []
         const move = movementCommand()
         const click = clickCommand()
@@ -257,12 +320,10 @@ PlasmoidItem {
             return
         }
 
+        actionInFlight = true
         stateName = "Executing"
         executable.connectSource("bash -lc '" + commands.join(" && ") + "'")
         executionFlash.restart()
-
-        if (!manualTest)
-            resetCycle()
     }
 
     Timer {
@@ -276,7 +337,10 @@ PlasmoidItem {
             const blockedBySchedule = !root.scheduleAllowsNow()
 
             if (blockedByBlackout || blockedBySchedule) {
-                root.suspended = true
+                if (!root.suspended) {
+                    root.suspended = true
+                    root.stopActivityTracking()
+                }
                 root.progress = 1.0
                 root.stateName = blockedByBlackout ? "Blackout" : "Scheduled"
                 return
@@ -284,16 +348,21 @@ PlasmoidItem {
 
             if (root.suspended) {
                 root.suspended = false
-                root.resetCycle()
+                root.startActivityTracking()
             }
 
             if (root.stateName !== "Executing")
                 root.stateName = "Running"
 
+            if (!root.inactivityCountdownActive) {
+                root.progress = 1.0
+                return
+            }
+
             root.elapsedMs += interval
             root.progress = Math.max(0, 1.0 - root.elapsedMs / root.cycleDurationMs)
 
-            if (root.elapsedMs >= root.cycleDurationMs)
+            if (root.elapsedMs >= root.cycleDurationMs && !root.actionInFlight)
                 root.performActions(false)
         }
     }
@@ -306,16 +375,83 @@ PlasmoidItem {
     }
 
     Plasma5Support.DataSource {
+        id: idleWaiter
+        engine: "executable"
+        connectedSources: []
+
+        onNewData: function(sourceName, data) {
+            const isCurrent = sourceName === root.idleWaitSource
+            disconnectSource(sourceName)
+            if (!isCurrent)
+                return
+
+            root.idleWaitPending = false
+            root.idleWaitSource = ""
+
+            const exitCode = data["exit code"]
+            if (exitCode !== undefined && exitCode !== 0) {
+                root.lastError = "KDE idle detection failed. Re-run the CachyOS installer to build the idle monitor."
+                return
+            }
+
+            if (!root.running || root.blackoutActiveNow() || !root.scheduleAllowsNow())
+                return
+
+            root.inactivityCountdownActive = true
+            root.elapsedMs = Math.min(root.activityArmDelayMs, root.cycleDurationMs)
+            root.progress = Math.max(0, 1.0 - root.elapsedMs / root.cycleDurationMs)
+            root.armActivityWait()
+        }
+    }
+
+    Plasma5Support.DataSource {
+        id: activityWaiter
+        engine: "executable"
+        connectedSources: []
+
+        onNewData: function(sourceName, data) {
+            const isCurrent = sourceName === root.activityWaitSource
+            disconnectSource(sourceName)
+            if (!isCurrent)
+                return
+
+            root.activityWaitPending = false
+            root.activityWaitSource = ""
+
+            const exitCode = data["exit code"]
+            if (exitCode !== undefined && exitCode !== 0) {
+                root.lastError = "KDE activity detection failed. Re-run the CachyOS installer to build the idle monitor."
+                return
+            }
+
+            if (!root.running)
+                return
+
+            // A real keyboard/mouse event occurred. Reset the full interval and
+            // wait until the session becomes idle again before counting down.
+            root.inactivityCountdownActive = false
+            root.startActivityTracking()
+        }
+    }
+
+    Plasma5Support.DataSource {
         id: executable
         engine: "executable"
         connectedSources: []
 
         onNewData: function(sourceName, data) {
             const exitCode = data["exit code"]
+            root.actionInFlight = false
+
             if (exitCode !== undefined && exitCode !== 0) {
                 root.lastError = "Move Mouse could not generate input. Check that ydotool is installed and ydotool.service is running."
+                root.running = false
+                root.stopActivityTracking()
+                root.stateName = "Idle"
             } else {
                 root.lastError = ""
+                if (root.running)
+                    root.startActivityTracking()
             }
             disconnectSource(sourceName)
         }
