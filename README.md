@@ -5,6 +5,22 @@ Originally designed to prevent Windows from locking the user session or going to
 
 <img src="Images/mm_blue.png" width="200">
 
+# Linux / CachyOS / KDE Plasma 6
+
+This fork now also contains a KDE Plasma 6 widget designed for CachyOS and other Arch-based Linux distributions. The Linux implementation supports Plasma Wayland by using `ydotool`/Linux `uinput` for pointer movement, while leaving the existing Windows/WPF application unchanged.
+
+See [`linux/plasma6/README.md`](linux/plasma6/README.md) for requirements, installation, configuration and troubleshooting.
+
+Quick install after cloning the repository:
+
+```bash
+sudo pacman -S ydotool
+systemctl --user enable --now ydotool.service
+bash linux/plasma6/install-cachyos.sh
+```
+
+Then right-click your KDE Plasma panel, choose **Add Widgets…**, search for **Move Mouse**, and add it to the panel.
+
 # Donate
 Move Mouse will always be free, but if you would like to buy me a beer to show your appreciation, you can do so using the following link. Thanks!
 
