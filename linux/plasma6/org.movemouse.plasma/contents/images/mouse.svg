@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dy="3"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fb8d9"/>
+      <stop offset="1" stop-color="#587e9f"/>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#shadow)" stroke="#1a222a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="34" cy="31" r="16" fill="#7fa7c6"/>
+    <circle cx="94" cy="31" r="16" fill="#7fa7c6"/>
+    <circle cx="34" cy="31" r="8" fill="#ff8a32" stroke-width="3"/>
+    <circle cx="94" cy="31" r="8" fill="#ff8a32" stroke-width="3"/>
+
+    <path d="M28 62c0-24 14-39 36-39s36 15 36 39v30c0 18-13 27-36 27s-36-9-36-27z" fill="url(#fur)"/>
+    <ellipse cx="64" cy="88" rx="22" ry="27" fill="#f7fbff" stroke-width="3"/>
+
+    <ellipse cx="49" cy="51" rx="11" ry="13" fill="#fff" stroke-width="3"/>
+    <ellipse cx="79" cy="51" rx="11" ry="13" fill="#fff" stroke-width="3"/>
+    <circle cx="52" cy="54" r="4.5" fill="#19222b" stroke="none"/>
+    <circle cx="76" cy="54" r="4.5" fill="#19222b" stroke="none"/>
+    <circle cx="53.5" cy="52.5" r="1.5" fill="#fff" stroke="none"/>
+    <circle cx="77.5" cy="52.5" r="1.5" fill="#fff" stroke="none"/>
+
+    <path d="M57 65c3-5 11-5 14 0-2 5-5 7-7 7s-5-2-7-7z" fill="#ed5b59" stroke-width="2.5"/>
+    <path d="M64 72v6" fill="none" stroke-width="2.5"/>
+    <path d="M64 78c-4 0-7 2-9 5M64 78c4 0 7 2 9 5" fill="none" stroke-width="2.5"/>
+
+    <path d="M48 70L20 65M48 76L18 78M80 70l28-5M80 76l30 2" fill="none" stroke-width="2" opacity="0.8"/>
+  </g>
+</svg>
