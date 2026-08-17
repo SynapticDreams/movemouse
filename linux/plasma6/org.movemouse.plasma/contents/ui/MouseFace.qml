@@ -33,7 +33,6 @@ Item {
     onRingThicknessChanged: ring.requestPaint()
 
     Rectangle {
-        id: background
         anchors.fill: parent
         anchors.margins: Math.max(2, face.ringThickness / 2)
         radius: width / 2
@@ -48,7 +47,7 @@ Item {
 
         onPaint: {
             const ctx = getContext("2d")
-            ctx.reset()
+            ctx.clearRect(0, 0, width, height)
 
             const thickness = Math.max(2, Math.min(face.ringThickness, width * 0.16))
             const radius = Math.max(1, Math.min(width, height) / 2 - thickness / 2 - 1)
@@ -72,18 +71,32 @@ Item {
         }
     }
 
-    Image {
+    Item {
         id: mascot
         anchors.centerIn: parent
         width: parent.width * (face.compact ? 0.67 : 0.62)
         height: width
-        source: "../images/mouse.svg"
-        fillMode: Image.PreserveAspectFit
-        smooth: true
 
         scale: face.stateName === "Executing" && face.animateMouse ? 1.08 : 1.0
         Behavior on scale {
             NumberAnimation { duration: face.animateMouse ? 120 : 0; easing.type: Easing.OutBack }
+        }
+
+        Image {
+            id: originalMascot
+            anchors.fill: parent
+            source: "../images/mouse.ico"
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            visible: status === Image.Ready
+        }
+
+        Image {
+            anchors.fill: parent
+            source: "../images/mouse.svg"
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            visible: originalMascot.status !== Image.Ready
         }
     }
 
@@ -102,7 +115,7 @@ Item {
 
         onPaint: {
             const ctx = getContext("2d")
-            ctx.reset()
+            ctx.clearRect(0, 0, width, height)
             ctx.fillStyle = "#28d31a"
             ctx.strokeStyle = "#12660c"
             ctx.lineWidth = Math.max(1.5, width * 0.06)
