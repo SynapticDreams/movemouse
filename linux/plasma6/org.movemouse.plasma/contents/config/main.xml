@@ -3,18 +3,103 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
   <kcfgfile name="" />
-  <group name="General">
-    <entry name="intervalSeconds" type="Int">
-      <label>Seconds between mouse movements</label>
-      <default>60</default>
-      <min>5</min>
+
+  <group name="Behaviour">
+    <entry name="lowerInterval" type="Int">
+      <label>Minimum seconds between actions</label>
+      <default>30</default>
+      <min>1</min>
       <max>3600</max>
     </entry>
-    <entry name="movePixels" type="Int">
-      <label>Pixels moved each time</label>
-      <default>1</default>
+    <entry name="upperInterval" type="Int">
+      <label>Maximum seconds between actions</label>
+      <default>60</default>
       <min>1</min>
-      <max>50</max>
+      <max>3600</max>
     </entry>
+    <entry name="randomInterval" type="Bool">
+      <label>Use a random interval</label>
+      <default>false</default>
+    </entry>
+    <entry name="startAtLaunch" type="Bool">
+      <label>Start actions when the widget loads</label>
+      <default>false</default>
+    </entry>
+  </group>
+
+  <group name="Actions">
+    <entry name="moveEnabled" type="Bool">
+      <label>Move the mouse cursor</label>
+      <default>true</default>
+    </entry>
+    <entry name="movePixels" type="Int">
+      <label>Movement distance</label>
+      <default>10</default>
+      <min>1</min>
+      <max>250</max>
+    </entry>
+    <entry name="moveDirection" type="Int">
+      <label>Movement direction</label>
+      <default>0</default>
+      <min>0</min>
+      <max>4</max>
+    </entry>
+    <entry name="clickEnabled" type="Bool">
+      <label>Click a mouse button after moving</label>
+      <default>false</default>
+    </entry>
+    <entry name="clickButton" type="Int">
+      <label>Mouse button</label>
+      <default>0</default>
+      <min>0</min>
+      <max>2</max>
+    </entry>
+  </group>
+
+  <group name="Appearance">
+    <entry name="showStatus" type="Bool">
+      <label>Show status text</label>
+      <default>true</default>
+    </entry>
+    <entry name="showCountdown" type="Bool">
+      <label>Show countdown ring</label>
+      <default>true</default>
+    </entry>
+    <entry name="animateMouse" type="Bool">
+      <label>Animate the mouse control</label>
+      <default>true</default>
+    </entry>
+    <entry name="ringThickness" type="Int">
+      <label>Countdown ring thickness</label>
+      <default>10</default>
+      <min>4</min>
+      <max>20</max>
+    </entry>
+  </group>
+
+  <group name="Schedule">
+    <entry name="scheduleEnabled" type="Bool"><default>false</default></entry>
+    <entry name="scheduleStart" type="String"><default>09:00</default></entry>
+    <entry name="scheduleEnd" type="String"><default>17:00</default></entry>
+    <entry name="scheduleMonday" type="Bool"><default>true</default></entry>
+    <entry name="scheduleTuesday" type="Bool"><default>true</default></entry>
+    <entry name="scheduleWednesday" type="Bool"><default>true</default></entry>
+    <entry name="scheduleThursday" type="Bool"><default>true</default></entry>
+    <entry name="scheduleFriday" type="Bool"><default>true</default></entry>
+    <entry name="scheduleSaturday" type="Bool"><default>false</default></entry>
+    <entry name="scheduleSunday" type="Bool"><default>false</default></entry>
+  </group>
+
+  <group name="Blackout">
+    <entry name="blackoutEnabled" type="Bool"><default>false</default></entry>
+    <entry name="blackoutStart" type="String"><default>12:00</default></entry>
+    <entry name="blackoutEnd" type="String"><default>13:00</default></entry>
+    <entry name="blackoutMonday" type="Bool"><default>true</default></entry>
+    <entry name="blackoutTuesday" type="Bool"><default>true</default></entry>
+    <entry name="blackoutWednesday" type="Bool"><default>true</default></entry>
+    <entry name="blackoutThursday" type="Bool"><default>true</default></entry>
+    <entry name="blackoutFriday" type="Bool"><default>true</default></entry>
+    <entry name="blackoutSaturday" type="Bool"><default>true</default></entry>
+    <entry name="blackoutSunday" type="Bool"><default>true</default></entry>
   </group>
 </kcfg>
