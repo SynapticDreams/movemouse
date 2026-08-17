@@ -61,6 +61,7 @@ install -Dm755 "$BUILD_DIR/movemouse-idle-monitor" "$IDLE_MONITOR_DEST"
 
 # Stage the package so the Plasma edition can reuse the original Windows
 # Move Mouse mascot without duplicating a binary asset in this Linux tree.
+mkdir -p "$STAGE_DIR/package"
 cp -a "$PACKAGE_DIR/." "$STAGE_DIR/package/"
 mkdir -p "$STAGE_DIR/package/contents/images"
 
