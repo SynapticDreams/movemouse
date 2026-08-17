@@ -6,12 +6,12 @@
       }
     ],
     "Category": "Utilities",
-    "Description": "Move Mouse for KDE Plasma 6 with the familiar circular mascot control, schedules and configurable actions.",
+    "Description": "Move Mouse for KDE Plasma 6 with the familiar circular mascot control, activity-aware countdown, schedules and configurable actions.",
     "Icon": "input-mouse",
     "Id": "org.movemouse.plasma",
     "License": "GPL-3.0-or-later",
     "Name": "Move Mouse",
-    "Version": "1.1.0",
+    "Version": "1.2.0",
     "Website": "https://github.com/SynapticDreams/movemouse"
   },
   "KPackageStructure": "Plasma/Applet",
