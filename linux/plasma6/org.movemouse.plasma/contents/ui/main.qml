@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as Controls
 import org.kde.plasma.plasmoid
+import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as Plasma5Support
 
@@ -66,7 +67,7 @@ PlasmoidItem {
 
     Timer {
         id: moveTimer
-        interval: Math.max(1, Plasmoid.configuration.intervalSeconds) * 1000
+        interval: Math.max(5, Plasmoid.configuration.intervalSeconds) * 1000
         running: root.running
         repeat: true
         triggeredOnStart: false
@@ -74,7 +75,7 @@ PlasmoidItem {
             const amount = Math.max(1, Plasmoid.configuration.movePixels)
             const dx = root.moveRight ? amount : -amount
             root.moveRight = !root.moveRight
-            executable.connectSource("ydotool mousemove -- " + dx + " 0")
+            executable.connectSource("ydotool mousemove -x " + dx + " -y 0")
         }
     }
 
@@ -86,7 +87,7 @@ PlasmoidItem {
         onNewData: function(sourceName, data) {
             const exitCode = data["exit code"]
             if (exitCode !== undefined && exitCode !== 0) {
-                root.lastError = "Mouse movement failed. Make sure ydotool is installed and ydotoold is running."
+                root.lastError = "Mouse movement failed. Make sure ydotool is installed and the ydotool user service is running."
             } else {
                 root.lastError = ""
             }
