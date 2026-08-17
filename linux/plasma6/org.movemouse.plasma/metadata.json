@@ -1,0 +1,19 @@
+{
+  "KPlugin": {
+    "Authors": [
+      {
+        "Name": "Move Mouse contributors"
+      }
+    ],
+    "Category": "Utilities",
+    "Description": "Keep a KDE Plasma session active by periodically moving the pointer.",
+    "Icon": "input-mouse",
+    "Id": "org.movemouse.plasma",
+    "License": "GPL-3.0-or-later",
+    "Name": "Move Mouse",
+    "Version": "1.0.0",
+    "Website": "https://github.com/SynapticDreams/movemouse"
+  },
+  "KPackageStructure": "Plasma/Applet",
+  "X-Plasma-API-Minimum-Version": "6.0"
+}
